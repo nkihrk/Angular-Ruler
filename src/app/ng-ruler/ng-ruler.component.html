@@ -1,0 +1,13 @@
+<div
+  #canvasWrapper
+  class="ngRuler-wrapper"
+  (mousedown)="onEvent($event)"
+  (mouseup)="onEvent($event)"
+  (mouseleave)="onEvent($event)"
+  (mousemove)="onMousemove($event)"
+>
+  <!-- 行 -->
+  <canvas #canvasL class="ngRuler-line"></canvas>
+  <!-- 列 -->
+  <canvas #canvasC class="ngRuler-column"></canvas>
+</div>

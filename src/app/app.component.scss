@@ -1,0 +1,13 @@
+.app-wrapper {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  padding-top: 20px;
+  padding-left: 20px;
+  background-color: #606060;
+
+  cursor: grab;
+  &:active {
+    cursor: grabbing;
+  }
+}

@@ -1,0 +1,41 @@
+.content-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  padding: 20px;
+}
+
+.text {
+  position: relative;
+  z-index: 1;
+  color: rgba($color: white, $alpha: 0.8);
+
+  h1 {
+    position: relative;
+    z-index: 1;
+    display: inline-block;
+  }
+
+  .copyright {
+    width: 400px;
+    text-align: justify;
+    text-justify: inter-ideograph;
+  }
+
+  .space {
+    width: 100%;
+    height: 10px;
+  }
+
+  .space-dbl {
+    width: 100%;
+    height: 20px;
+  }
+}
+
+canvas {
+  position: absolute;
+  z-index: 0;
+  top: 0;
+  left: 0;
+}
