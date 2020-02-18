@@ -8,6 +8,7 @@ import { DataService } from "../data.service";
   styleUrls: ["./content.component.scss"]
 })
 export class ContentComponent implements OnInit {
+  @ViewChild("text", { static: true }) text: ElementRef;
   @ViewChild("contentWrapper", { static: true }) wrapper: ElementRef;
   @ViewChild("canvasContent", { static: true }) c: ElementRef<
     HTMLCanvasElement
@@ -15,6 +16,7 @@ export class ContentComponent implements OnInit {
 
   private ctx: CanvasRenderingContext2D;
 
+  private scale: number = 0;
   private offsetX: number = 0;
   private offsetY: number = 0;
 
@@ -23,6 +25,9 @@ export class ContentComponent implements OnInit {
   ngOnInit() {
     this._createGrid();
     this._elementObserver();
+    this.dataService.currentScale.subscribe(message => {
+      this.scale = message;
+    });
     this.dataService.currentOffsetX.subscribe(message => {
       this.offsetX = message;
       this._createGrid();
@@ -44,53 +49,61 @@ export class ContentComponent implements OnInit {
 
   _createGrid(): void {
     this.ctx = this.c.nativeElement.getContext("2d");
-    const l = this.ctx.canvas;
-    l.width = this.wrapper.nativeElement.clientWidth;
-    l.height = this.wrapper.nativeElement.clientHeight;
+    const c = this.ctx.canvas;
+    c.width = this.wrapper.nativeElement.clientWidth;
+    c.height = this.wrapper.nativeElement.clientHeight;
 
     this.ctx.translate(0.5, 0.5);
-    this.ctx.clearRect(0, 0, l.width, l.height);
+    this.ctx.clearRect(0, 0, c.width, c.height);
 
     // X-axis positive
-    const offsetX: number = l.height + this.offsetX;
-    const remainX: number = Math.abs(Math.floor(this.offsetX / 50));
-    const cutoffX: number = offsetX - remainX * 50;
+    const offsetX: number = this.offsetX;
+    const remainX: number = Math.abs(Math.floor(this.offsetX / this.scale));
+    const cutoffX: number = offsetX - remainX * this.scale;
 
-    for (let i = cutoffX; i < l.width; i += 10) {
+    for (let i = cutoffX; i < c.width; i += 10) {
+      this.ctx.beginPath();
       this.ctx.moveTo(i, 0);
-      this.ctx.lineTo(i, l.height);
+      this.ctx.lineTo(i, c.height);
       this.ctx.strokeStyle = "#707070";
       this.ctx.lineWidth = 1;
       this.ctx.stroke();
     }
     // X-axis negative
     for (let i = cutoffX; i > 0; i -= 10) {
+      this.ctx.beginPath();
       this.ctx.moveTo(i, 0);
-      this.ctx.lineTo(i, l.height);
+      this.ctx.lineTo(i, c.height);
       this.ctx.strokeStyle = "#707070";
       this.ctx.lineWidth = 1;
       this.ctx.stroke();
     }
 
     // Y-axis positive
-    const offsetY: number = l.width + this.offsetY;
-    const remainY: number = Math.abs(Math.floor(offsetY / 50));
-    const cutoffY: number = offsetY - remainY * 50;
+    const offsetY: number = this.offsetY;
+    const remainY: number = Math.abs(Math.floor(this.offsetY / this.scale));
+    const cutoffY: number = offsetY - remainY * this.scale;
 
-    for (let i = cutoffY; i < l.height; i += 10) {
+    for (let i = cutoffY; i < c.height; i += 10) {
+      this.ctx.beginPath();
       this.ctx.moveTo(0, i);
-      this.ctx.lineTo(l.width, i);
+      this.ctx.lineTo(c.width, i);
       this.ctx.strokeStyle = "#707070";
       this.ctx.lineWidth = 1;
       this.ctx.stroke();
     }
     // Y-axis negative
     for (let i = cutoffY; i > 0; i -= 10) {
+      this.ctx.beginPath();
       this.ctx.moveTo(0, i);
-      this.ctx.lineTo(l.width, i);
+      this.ctx.lineTo(c.width, i);
       this.ctx.strokeStyle = "#707070";
       this.ctx.lineWidth = 1;
       this.ctx.stroke();
     }
+
+    // Set positions
+    this.text.nativeElement.style.top = `${20 + offsetY}px`;
+    this.text.nativeElement.style.left = `${30 + offsetX}px`;
   }
 }

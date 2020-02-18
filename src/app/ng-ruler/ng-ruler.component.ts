@@ -13,6 +13,8 @@ export class NgRulerComponent implements OnInit {
   @ViewChild("canvasL", { static: true }) l: ElementRef<HTMLCanvasElement>;
 
   private rulerThickness: number = 25; // Thickness of the window ruler
+  private parentScale: number = 50; // Parent scale of the window ruler
+  private childScale: number = 10; // Child scale of the window ruler
   private rulerColor: string = "#333333"; // Background color of the window ruler
   private scaleColor: string = "#606060"; // Color of the scale of the window ruler
   private numColor: string = "#9e9e9e"; // Color of the number printed in the window ruler
@@ -44,7 +46,11 @@ export class NgRulerComponent implements OnInit {
       this.downFlg = false;
     }
 
-    if ($event.type === "mouseup" || $event.type == "touchend") {
+    if (
+      $event.type === "mouseup" ||
+      $event.type == "touchend" ||
+      !this.downFlg
+    ) {
       this.prevOffsetX = this.newOffsetX;
       this.prevOffsetY = this.newOffsetY;
     }
@@ -70,9 +76,15 @@ export class NgRulerComponent implements OnInit {
   }
 
   ngOnInit() {
+    this._init();
+
     this._createLine(0);
     this._createColumn(0);
     this._elementObserver();
+  }
+
+  _init() {
+    this.dataService.newScale(this.parentScale);
   }
 
   // https://stackoverflow.com/questions/40659090/element-height-and-width-change-detection-in-angular-2
@@ -148,15 +160,19 @@ export class NgRulerComponent implements OnInit {
 
     // Parents - positive
     const offset: number = l.height + offsetX;
-    const remain: number = Math.abs(Math.floor(offsetX / 50));
-    const cutoff: number = offset - remain * 50;
+    const remain: number = Math.abs(Math.floor(offsetX / this.parentScale));
+    const cutoff: number = offset - remain * this.parentScale;
     let scaleCount: number = 0;
 
-    for (let i = cutoff; i < l.width; i += 50) {
+    for (let i = cutoff; i < l.width; i += this.parentScale) {
       this.ctxL.beginPath();
       this.ctxL.moveTo(i, 0);
       this.ctxL.lineTo(i, l.height);
-      this.ctxL.fillText(`${Math.abs((remain - scaleCount) * 50)}`, i + 5, 10);
+      this.ctxL.fillText(
+        `${Math.abs((remain - scaleCount) * this.parentScale)}`,
+        i + 5,
+        10
+      );
       this.ctxL.strokeStyle = this.scaleColor;
       this.ctxL.lineWidth = 1;
       this.ctxL.font = this.fontType;
@@ -167,11 +183,15 @@ export class NgRulerComponent implements OnInit {
     }
     // // Parents - nagative
     scaleCount = 0;
-    for (let i = cutoff; i > 0; i -= 50) {
+    for (let i = cutoff; i > 0; i -= this.parentScale) {
       this.ctxL.beginPath();
       this.ctxL.moveTo(i, 0);
       this.ctxL.lineTo(i, l.height);
-      this.ctxL.fillText(`${Math.abs((remain - scaleCount) * 50)}`, i + 5, 10);
+      this.ctxL.fillText(
+        `${Math.abs((remain - scaleCount) * this.parentScale)}`,
+        i + 5,
+        10
+      );
       this.ctxL.strokeStyle = this.scaleColor;
       this.ctxL.lineWidth = 1;
       this.ctxL.font = this.fontType;
@@ -182,7 +202,7 @@ export class NgRulerComponent implements OnInit {
     }
 
     // Children - positive
-    for (let i = cutoff; i < l.width; i += 10) {
+    for (let i = cutoff; i < l.width; i += this.parentScale / this.childScale) {
       this.ctxL.beginPath();
       this.ctxL.moveTo(i, 15);
       this.ctxL.lineTo(i, l.height);
@@ -191,7 +211,7 @@ export class NgRulerComponent implements OnInit {
       this.ctxL.stroke();
     }
     // // Children - negative
-    for (let i = cutoff; i > 0; i -= 10) {
+    for (let i = cutoff; i > 0; i -= this.parentScale / this.childScale) {
       this.ctxL.beginPath();
       this.ctxL.moveTo(i, 15);
       this.ctxL.lineTo(i, l.height);
@@ -232,17 +252,17 @@ export class NgRulerComponent implements OnInit {
 
     // Parents - positive
     const offset: number = c.width + offsetY;
-    const remain: number = Math.abs(Math.floor(offsetY / 50));
-    const cutoff: number = offset - remain * 50;
+    const remain: number = Math.abs(Math.floor(offsetY / this.parentScale));
+    const cutoff: number = offset - remain * this.parentScale;
     let scaleCount: number = 0;
 
-    for (let i = cutoff; i < c.height; i += 50) {
+    for (let i = cutoff; i < c.height; i += this.parentScale) {
       this.ctxC.beginPath();
       this.ctxC.moveTo(0, i);
       this.ctxC.lineTo(c.width, i);
       this._fillTextLine(
         this.ctxC,
-        `${Math.abs((remain - scaleCount) * 50)}`,
+        `${Math.abs((remain - scaleCount) * this.parentScale)}`,
         4,
         i + 10
       );
@@ -256,13 +276,13 @@ export class NgRulerComponent implements OnInit {
     }
     // Parents - negative
     scaleCount = 0;
-    for (let i = cutoff; i > 0; i -= 50) {
+    for (let i = cutoff; i > 0; i -= this.parentScale) {
       this.ctxC.beginPath();
       this.ctxC.moveTo(0, i);
       this.ctxC.lineTo(c.width, i);
       this._fillTextLine(
         this.ctxC,
-        `${Math.abs((remain - scaleCount) * 50)}`,
+        `${Math.abs((remain - scaleCount) * this.parentScale)}`,
         4,
         i + 10
       );
@@ -276,7 +296,11 @@ export class NgRulerComponent implements OnInit {
     }
 
     // Children - positive
-    for (let i = cutoff; i < c.height; i += 10) {
+    for (
+      let i = cutoff;
+      i < c.height;
+      i += this.parentScale / this.childScale
+    ) {
       this.ctxC.beginPath();
       this.ctxC.moveTo(15, i);
       this.ctxC.lineTo(c.width, i);
@@ -285,7 +309,7 @@ export class NgRulerComponent implements OnInit {
       this.ctxC.stroke();
     }
     // Children - nagative
-    for (let i = cutoff; i > 0; i -= 10) {
+    for (let i = cutoff; i > 0; i -= this.parentScale / this.childScale) {
       this.ctxC.beginPath();
       this.ctxC.moveTo(15, i);
       this.ctxC.lineTo(c.width, i);

@@ -6,8 +6,10 @@
 }
 
 .text {
-  position: relative;
+  position: absolute;
   z-index: 1;
+  top: 20px;
+  left: 30px;
   color: rgba($color: white, $alpha: 0.8);
 
   h1 {
@@ -39,4 +41,11 @@ canvas {
   z-index: 0;
   top: 0;
   left: 0;
+
+  image-rendering: optimizeSpeed;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: optimize-contrast;
+  image-rendering: pixelated;
+  -ms-interpolation-mode: nearest-neighbor;
 }
