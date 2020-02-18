@@ -12,11 +12,17 @@ export class NgRulerComponent implements OnInit {
   @ViewChild("canvasC", { static: true }) c: ElementRef<HTMLCanvasElement>;
   @ViewChild("canvasL", { static: true }) l: ElementRef<HTMLCanvasElement>;
 
+  private rulerThickness: number = 25; // Thickness of the window ruler
+  private rulerColor: string = "#333333"; // Background color of the window ruler
+  private scaleColor: string = "#606060"; // Color of the scale of the window ruler
+  private numColor: string = "#9e9e9e"; // Color of the number printed in the window ruler
+  private borderColor: string = "#606060"; // Border color of the window ruler
+  private fontType: string = "bold sans-serif"; // Font of the window ruler
+
   private ctxC: CanvasRenderingContext2D;
   private ctxL: CanvasRenderingContext2D;
 
   private downFlg: boolean = false;
-  private resizeFlg: boolean = false;
   private prevX: number = 0;
   private prevY: number = 0;
   private prevOffsetX: number = 0;
@@ -24,32 +30,40 @@ export class NgRulerComponent implements OnInit {
   private newOffsetX: number = 0;
   private newOffsetY: number = 0;
 
-  public offsetX: number = 0;
-  public offsetY: number = 0;
-
   constructor(private dataService: DataService) {}
 
-  onEvent(event: MouseEvent): void {
-    if (event.type !== "mouseleave") {
-      this.downFlg = event.type === "mousedown" ? true : false;
+  onEvents($event: any): void {
+    const isTouchDevice: boolean = !!$event.touches;
+    const event: any = isTouchDevice ? $event.touches[0] : $event;
+    const eventType: string = isTouchDevice ? "touchstart" : "mousedown";
+    if (isTouchDevice) $event.preventDefault();
+
+    if ($event.type !== "mouseleave") {
+      this.downFlg = $event.type === eventType ? true : false;
     } else {
       this.downFlg = false;
     }
-    this.prevX = event.type === "mousedown" ? event.clientX : 0;
-    this.prevY = event.type === "mousedown" ? event.clientY : 0;
+
+    if ($event.type === "mouseup" || $event.type == "touchend") {
+      this.prevOffsetX = this.newOffsetX;
+      this.prevOffsetY = this.newOffsetY;
+    }
+
+    this.prevX = $event.type === eventType ? event.clientX : 0;
+    this.prevY = $event.type === eventType ? event.clientY : 0;
   }
 
-  onMousemove(event: MouseEvent): void {
-    if (this.downFlg && !this.resizeFlg) {
-      const newOffsetX = event.clientX - this.prevX;
-      const newOffsetY = event.clientY - this.prevY;
+  onMoveEvent($event: any): void {
+    const isTouchDevice: boolean = !!$event.touches;
+    const event: any = isTouchDevice ? $event.touches[0] : $event;
+    if (isTouchDevice) $event.preventDefault();
+
+    if (this.downFlg) {
+      const newOffsetX: number = event.clientX - this.prevX;
+      const newOffsetY: number = event.clientY - this.prevY;
       this._createLine(newOffsetX);
       this._createColumn(newOffsetY);
       this._showMousePos(event.clientX, event.clientY);
-    } else {
-      this.resizeFlg = false;
-      this.prevOffsetX = this.newOffsetX;
-      this.prevOffsetY = this.newOffsetY;
     }
 
     this._showMousePos(event.clientX, event.clientY);
@@ -63,8 +77,7 @@ export class NgRulerComponent implements OnInit {
 
   // https://stackoverflow.com/questions/40659090/element-height-and-width-change-detection-in-angular-2
   _elementObserver(): void {
-    const ro = new ResizeObserver(() => {
-      this.resizeFlg = true;
+    const ro: any = new ResizeObserver(() => {
       this._createLine(0);
       this._createColumn(0);
     });
@@ -72,176 +85,230 @@ export class NgRulerComponent implements OnInit {
     ro.observe(this.wrapper.nativeElement);
   }
 
-  _showMousePos(clientX, clientY) {
+  _showMousePos(clientX, clientY): void {
     // Line
     if (!this.downFlg) {
-      this.ctxL.clearRect(clientX, 0, 3, 20);
+      this.ctxL.clearRect(clientX, 0, 3, this.rulerThickness);
       this._createLine(0);
     }
     this.ctxL.beginPath();
     this.ctxL.setLineDash([3, 2]);
     this.ctxL.moveTo(clientX, 0);
-    this.ctxL.lineTo(clientX, 20);
+    this.ctxL.lineTo(clientX, this.rulerThickness);
     this.ctxL.stroke();
     // Empty box
-    this.ctxL.strokeStyle = "#606060";
-    this.ctxL.strokeRect(0, 0, 20, 20);
-    this.ctxL.fillStyle = "#333333";
-    this.ctxL.fillRect(0, 0, 20, 20);
+    this.ctxL.beginPath();
+    this.ctxL.strokeStyle = this.borderColor;
+    this.ctxL.setLineDash([]);
+    this.ctxL.strokeRect(0, 0, this.rulerThickness, this.rulerThickness);
+    this.ctxL.fillStyle = this.rulerColor;
+    this.ctxL.fillRect(0, 0, this.rulerThickness, this.rulerThickness);
+    this.ctxL.stroke();
 
     // Column
     if (!this.downFlg) {
-      this.ctxL.clearRect(0, clientY, 3, 20);
+      this.ctxL.clearRect(0, clientY, 3, this.rulerThickness);
       this._createColumn(0);
     }
     this.ctxC.beginPath();
     this.ctxC.setLineDash([3, 2]);
     this.ctxC.moveTo(0, clientY);
-    this.ctxC.lineTo(20, clientY);
+    this.ctxC.lineTo(this.rulerThickness, clientY);
     this.ctxC.stroke();
     // Empty box
-    this.ctxC.strokeStyle = "#606060";
-    this.ctxC.strokeRect(0, 0, 20, 20);
-    this.ctxC.fillStyle = "#333333";
-    this.ctxC.fillRect(0, 0, 20, 20);
+    this.ctxC.beginPath();
+    this.ctxC.strokeStyle = this.borderColor;
+    this.ctxC.setLineDash([]);
+    this.ctxC.strokeRect(0, 0, this.rulerThickness, this.rulerThickness);
+    this.ctxC.fillStyle = this.rulerColor;
+    this.ctxC.fillRect(0, 0, this.rulerThickness, this.rulerThickness);
+    this.ctxC.stroke();
   }
 
   _createLine(newOffsetX: number): void {
     this.ctxL = this.l.nativeElement.getContext("2d");
-    const l = this.ctxL.canvas;
+    const l: any = this.ctxL.canvas;
     l.width = this.wrapper.nativeElement.clientWidth;
-    l.height = 20;
+    l.height = this.rulerThickness;
+    const offsetX: number = this.prevOffsetX + newOffsetX;
 
     this.ctxL.translate(0.5, 0.5);
-    this.ctxL.clearRect(0, 0, l.width, 20);
+    this.ctxL.clearRect(0, 0, l.width, l.height);
 
     // Frame
-    this.ctxL.strokeStyle = "#606060";
-    this.ctxL.strokeRect(20, 0, l.width - 20, 20);
-    // Frame background color
-    this.ctxL.fillStyle = "#333333";
-    this.ctxL.fillRect(20, 0, l.width - 20, 20);
+    this.ctxL.beginPath();
+    this.ctxL.strokeStyle = this.borderColor;
+    this.ctxL.strokeRect(l.height, 0, l.width - l.height, l.height);
+    this.ctxL.fillStyle = this.rulerColor;
+    this.ctxL.fillRect(l.height, 0, l.width - l.height, l.height);
+    this.ctxL.stroke();
 
-    // Parents
-    this.ctxL.fillText("0", 20 + 5, 10);
-    this.ctxL.font = "bold sans-serif";
-    this.ctxL.fillStyle = "#9e9e9e";
-    const offsetX = this.prevOffsetX + newOffsetX;
     this.dataService.newOffsetX(offsetX);
     this.newOffsetX = offsetX;
+
     // Parents - positive
-    for (let i = 20 + offsetX; i < l.width; i += 50) {
+    const offset: number = l.height + offsetX;
+    const remain: number = Math.abs(Math.floor(offsetX / 50));
+    const cutoff: number = offset - remain * 50;
+    let scaleCount: number = 0;
+
+    for (let i = cutoff; i < l.width; i += 50) {
+      this.ctxL.beginPath();
       this.ctxL.moveTo(i, 0);
-      this.ctxL.lineTo(i, 20);
-      this.ctxL.fillText(`${i - 20 - offsetX}`, i + 5, 10);
-      this.ctxL.strokeStyle = "#606060";
+      this.ctxL.lineTo(i, l.height);
+      this.ctxL.fillText(`${Math.abs((remain - scaleCount) * 50)}`, i + 5, 10);
+      this.ctxL.strokeStyle = this.scaleColor;
       this.ctxL.lineWidth = 1;
+      this.ctxL.font = this.fontType;
+      this.ctxL.fillStyle = this.numColor;
       this.ctxL.stroke();
+
+      scaleCount++;
     }
-    // Parents - nagative
-    for (let i = 20 + offsetX; i > 0; i -= 50) {
+    // // Parents - nagative
+    scaleCount = 0;
+    for (let i = cutoff; i > 0; i -= 50) {
+      this.ctxL.beginPath();
       this.ctxL.moveTo(i, 0);
-      this.ctxL.lineTo(i, 20);
-      this.ctxL.fillText(`${-(i - 20 - offsetX)}`, i + 5, 10);
-      this.ctxL.strokeStyle = "#606060";
+      this.ctxL.lineTo(i, l.height);
+      this.ctxL.fillText(`${Math.abs((remain - scaleCount) * 50)}`, i + 5, 10);
+      this.ctxL.strokeStyle = this.scaleColor;
       this.ctxL.lineWidth = 1;
+      this.ctxL.font = this.fontType;
+      this.ctxL.fillStyle = this.numColor;
       this.ctxL.stroke();
+
+      scaleCount++;
     }
 
     // Children - positive
-    for (let i = 20 + offsetX; i < l.width; i += 10) {
+    for (let i = cutoff; i < l.width; i += 10) {
+      this.ctxL.beginPath();
       this.ctxL.moveTo(i, 15);
-      this.ctxL.lineTo(i, 20);
-      this.ctxL.strokeStyle = "#606060";
+      this.ctxL.lineTo(i, l.height);
+      this.ctxL.strokeStyle = this.scaleColor;
       this.ctxL.lineWidth = 1;
       this.ctxL.stroke();
     }
-    // Children - negative
-    for (let i = 20 + offsetX; i > 0; i -= 10) {
+    // // Children - negative
+    for (let i = cutoff; i > 0; i -= 10) {
+      this.ctxL.beginPath();
       this.ctxL.moveTo(i, 15);
-      this.ctxL.lineTo(i, 20);
-      this.ctxL.strokeStyle = "#606060";
+      this.ctxL.lineTo(i, l.height);
+      this.ctxL.strokeStyle = this.scaleColor;
       this.ctxL.lineWidth = 1;
       this.ctxL.stroke();
     }
 
     // Empty box
-    this.ctxL.strokeStyle = "#606060";
-    this.ctxL.strokeRect(0, 0, 20, 20);
-    this.ctxL.fillStyle = "#333333";
-    this.ctxL.fillRect(0, 0, 20, 20);
+    this.ctxL.beginPath();
+    this.ctxL.strokeStyle = this.borderColor;
+    this.ctxL.strokeRect(0, 0, l.height, l.height);
+    this.ctxL.fillStyle = this.rulerColor;
+    this.ctxL.fillRect(0, 0, l.height, l.height);
+    this.ctxL.stroke();
   }
 
   _createColumn(newOffsetY: number): void {
     this.ctxC = this.c.nativeElement.getContext("2d");
-    const c = this.ctxC.canvas;
-    c.width = 20;
+    const c: any = this.ctxC.canvas;
+    c.width = this.rulerThickness;
     c.height = this.wrapper.nativeElement.clientHeight;
+    const offsetY: number = this.prevOffsetY + newOffsetY;
 
     this.ctxC.translate(0.5, 0.5);
+    this.ctxL.clearRect(0, 0, c.width, c.height);
 
     // Frame
-    this.ctxC.strokeStyle = "#606060";
-    this.ctxC.strokeRect(0, 20, 20, c.height - 20);
-    // Frame background color
-    this.ctxC.fillStyle = "#333333";
-    this.ctxC.fillRect(0, 20, 20, c.height - 20);
+    this.ctxC.beginPath();
+    this.ctxC.strokeStyle = this.borderColor;
+    this.ctxC.strokeRect(0, c.width, c.width, c.height - c.width);
+    this.ctxC.fillStyle = this.rulerColor;
+    this.ctxC.fillRect(0, c.width, c.width, c.height - c.width);
+    this.ctxC.stroke();
 
-    // Parents
-    this.ctxC.fillText("0", 5, 20 + 10);
-    this.ctxC.font = "bold sans-serif";
-    this.ctxC.fillStyle = "#9e9e9e";
-    const offsetY = this.prevOffsetY + newOffsetY;
     this.dataService.newOffsetY(offsetY);
     this.newOffsetY = offsetY;
+
     // Parents - positive
-    for (let i = 20 + offsetY; i < c.height; i += 50) {
+    const offset: number = c.width + offsetY;
+    const remain: number = Math.abs(Math.floor(offsetY / 50));
+    const cutoff: number = offset - remain * 50;
+    let scaleCount: number = 0;
+
+    for (let i = cutoff; i < c.height; i += 50) {
+      this.ctxC.beginPath();
       this.ctxC.moveTo(0, i);
-      this.ctxC.lineTo(20, i);
-      this._fillTextLine(this.ctxC, `${i - 20 - offsetY}`, 4, i + 10);
-      this.ctxC.strokeStyle = "#606060";
+      this.ctxC.lineTo(c.width, i);
+      this._fillTextLine(
+        this.ctxC,
+        `${Math.abs((remain - scaleCount) * 50)}`,
+        4,
+        i + 10
+      );
+      this.ctxC.strokeStyle = this.scaleColor;
       this.ctxC.lineWidth = 1;
+      this.ctxC.font = this.fontType;
+      this.ctxC.fillStyle = this.numColor;
       this.ctxC.stroke();
+
+      scaleCount++;
     }
     // Parents - negative
-    for (let i = 20 + offsetY; i > 0; i -= 50) {
+    scaleCount = 0;
+    for (let i = cutoff; i > 0; i -= 50) {
+      this.ctxC.beginPath();
       this.ctxC.moveTo(0, i);
-      this.ctxC.lineTo(20, i);
-      this._fillTextLine(this.ctxC, `${-(i - 20 - offsetY)}`, 4, i + 10);
-      this.ctxC.strokeStyle = "#606060";
+      this.ctxC.lineTo(c.width, i);
+      this._fillTextLine(
+        this.ctxC,
+        `${Math.abs((remain - scaleCount) * 50)}`,
+        4,
+        i + 10
+      );
+      this.ctxC.strokeStyle = this.scaleColor;
       this.ctxC.lineWidth = 1;
+      this.ctxC.font = this.fontType;
+      this.ctxC.fillStyle = this.numColor;
       this.ctxC.stroke();
+
+      scaleCount++;
     }
 
     // Children - positive
-    for (let i = 20 + offsetY; i < c.height; i += 10) {
+    for (let i = cutoff; i < c.height; i += 10) {
+      this.ctxC.beginPath();
       this.ctxC.moveTo(15, i);
-      this.ctxC.lineTo(20, i);
-      this.ctxC.strokeStyle = "#606060";
+      this.ctxC.lineTo(c.width, i);
+      this.ctxC.strokeStyle = this.scaleColor;
       this.ctxC.lineWidth = 1;
       this.ctxC.stroke();
     }
     // Children - nagative
-    for (let i = 20 + offsetY; i > 0; i -= 10) {
+    for (let i = cutoff; i > 0; i -= 10) {
+      this.ctxC.beginPath();
       this.ctxC.moveTo(15, i);
-      this.ctxC.lineTo(20, i);
-      this.ctxC.strokeStyle = "#606060";
+      this.ctxC.lineTo(c.width, i);
+      this.ctxC.strokeStyle = this.scaleColor;
       this.ctxC.lineWidth = 1;
       this.ctxC.stroke();
     }
 
     // Empty box
-    this.ctxC.strokeStyle = "#606060";
-    this.ctxC.strokeRect(0, 0, 20, 20);
-    this.ctxC.fillStyle = "#333333";
-    this.ctxC.fillRect(0, 0, 20, 20);
+    this.ctxC.beginPath();
+    this.ctxC.strokeStyle = this.borderColor;
+    this.ctxC.strokeRect(0, 0, c.width, c.width);
+    this.ctxC.fillStyle = this.rulerColor;
+    this.ctxC.fillRect(0, 0, c.width, c.width);
+    this.ctxC.stroke();
   }
 
   _fillTextLine(ctx, text, x, y): void {
-    const textList = text.toString().split("");
-    const lineHeight = ctx.measureText("あ").width;
+    const textList: Array<String> = text.toString().split("");
+    const lineHeight: number = ctx.measureText("あ").width;
     textList.forEach((text, i) => {
-      const resY = y + lineHeight * i - lineHeight * textList.length - 5;
+      const resY: number =
+        y + lineHeight * i - lineHeight * textList.length - 5;
       ctx.fillText(text, x, resY);
     });
   }

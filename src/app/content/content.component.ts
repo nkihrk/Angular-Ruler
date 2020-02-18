@@ -52,7 +52,11 @@ export class ContentComponent implements OnInit {
     this.ctx.clearRect(0, 0, l.width, l.height);
 
     // X-axis positive
-    for (let i = this.offsetX; i < l.width; i += 10) {
+    const offsetX: number = l.height + this.offsetX;
+    const remainX: number = Math.abs(Math.floor(this.offsetX / 50));
+    const cutoffX: number = offsetX - remainX * 50;
+
+    for (let i = cutoffX; i < l.width; i += 10) {
       this.ctx.moveTo(i, 0);
       this.ctx.lineTo(i, l.height);
       this.ctx.strokeStyle = "#707070";
@@ -60,7 +64,7 @@ export class ContentComponent implements OnInit {
       this.ctx.stroke();
     }
     // X-axis negative
-    for (let i = this.offsetX; i > 0; i -= 10) {
+    for (let i = cutoffX; i > 0; i -= 10) {
       this.ctx.moveTo(i, 0);
       this.ctx.lineTo(i, l.height);
       this.ctx.strokeStyle = "#707070";
@@ -69,7 +73,11 @@ export class ContentComponent implements OnInit {
     }
 
     // Y-axis positive
-    for (let i = this.offsetY; i < l.height; i += 10) {
+    const offsetY: number = l.width + this.offsetY;
+    const remainY: number = Math.abs(Math.floor(offsetY / 50));
+    const cutoffY: number = offsetY - remainY * 50;
+
+    for (let i = cutoffY; i < l.height; i += 10) {
       this.ctx.moveTo(0, i);
       this.ctx.lineTo(l.width, i);
       this.ctx.strokeStyle = "#707070";
@@ -77,7 +85,7 @@ export class ContentComponent implements OnInit {
       this.ctx.stroke();
     }
     // Y-axis negative
-    for (let i = this.offsetY; i > 0; i -= 10) {
+    for (let i = cutoffY; i > 0; i -= 10) {
       this.ctx.moveTo(0, i);
       this.ctx.lineTo(l.width, i);
       this.ctx.strokeStyle = "#707070";
