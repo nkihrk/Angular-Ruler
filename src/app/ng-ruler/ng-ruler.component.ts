@@ -41,7 +41,7 @@ export class NgRulerComponent implements OnInit {
     if (isTouchDevice) $event.preventDefault();
 
     if ($event.type !== "mouseleave") {
-      this.downFlg = $event.type === eventType ? true : false;
+      this.downFlg = $event.type === eventType;
     } else {
       this.downFlg = false;
     }
@@ -69,7 +69,6 @@ export class NgRulerComponent implements OnInit {
       const newOffsetY: number = event.clientY - this.prevY;
       this._createLine(newOffsetX);
       this._createColumn(newOffsetY);
-      this._showMousePos(event.clientX, event.clientY);
     }
 
     this._showMousePos(event.clientX, event.clientY);
